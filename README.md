@@ -6,6 +6,8 @@ A production-inspired payment operations dashboard built with **React, TypeScrip
 
 The application simulates the type of internal tooling used by payment operations teams to import transaction exports, validate data quality, monitor processing metrics, and investigate failed imports.
 
+**Synthetic data only.** This is a portfolio demo. Use the fictional CSVs in `sample-data/`; never upload real payment, customer or card data.
+
 Rather than focusing on CRUD functionality, this project demonstrates backend architecture, validation pipelines, data persistence, and frontend dashboard development commonly found in fintech systems.
 
 ---
@@ -16,6 +18,7 @@ Rather than focusing on CRUD functionality, this project demonstrates backend ar
 - Comprehensive row-level validation
 - Import history
 - Dashboard analytics
+- Scoped failure analytics with currency breakdowns and recorded failure reasons
 - Transaction search
 - Filtering
 - Sorting
@@ -136,6 +139,31 @@ The dashboard provides operational metrics including:
 - Success rate
 
 These metrics are aggregated by the backend rather than calculated on the client.
+
+---
+
+# Ops Copilot — in progress
+
+Ops Copilot extends this application in course order: **Claude API → MCP → Agent Skills → Claude Code**. The first increment is a deterministic failure-analysis endpoint; Claude integration is not implemented yet.
+
+`GET /api/analytics/failures?from=2026-11-10&to=2026-11-11` returns counts, failure rates, currency breakdowns and recorded failure reasons for a UTC date range. The backend computes every figure. An empty dataset has a `null` failure rate, and the response identifies PostgreSQL versus demo memory as its source.
+
+The target architecture below includes later milestones, marked **planned**:
+
+```mermaid
+flowchart TD
+    UI["React dashboard / Copilot planned"] --> API["Express API"]
+    API <--> Claude["Claude API — planned"]
+    API --> Tools["Shared tools — planned"]
+    Client["Claude Desktop / Code — planned"] --> MCP["MCP server — planned"]
+    MCP --> Tools
+    Tools --> Analytics["Analytics and repository functions"]
+    API --> Analytics
+    Analytics --> DB["PostgreSQL"]
+    Skills["Ops runbook skills — planned"] -. guide investigations .-> Client
+```
+
+See [the build sequence, API contract and reproducible demo](docs/ops-copilot.md). Monetary analytics require exact decimal storage first; the current schema uses `Float`. Merchant-level investigations also require a merchant identifier, which the schema does not yet contain.
 
 ---
 
@@ -320,15 +348,14 @@ npm run dev
 | GET | `/api/imports/:id` | Import details |
 | GET | `/api/transactions` | Transactions |
 | GET | `/api/transactions/summary` | Dashboard metrics |
+| GET | `/api/analytics/failures` | Failure counts, rates and recorded reasons within a UTC range |
 
 ---
 
 # 🚀 Future Improvements
 
 - AI-powered operations assistant
-- Automated test suite
-- Docker Compose
-- GitHub Actions CI/CD
+- Expand automated coverage, including live PostgreSQL integration tests
 - Environment-based frontend configuration
 - Zod validation
 - Request logging

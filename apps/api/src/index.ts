@@ -11,6 +11,8 @@ import { listImports } from "./importRepository.js";
 import { type ImportSortField, type SortOrder } from "./importTypes.js";
 import { getTransactionsSummary } from "./transactionsRepository.js";
 import { listTransactions } from "./transactionsRepository.js";
+import { getFailureAnalytics } from "./failureAnalytics.js";
+import { createFailureAnalyticsRouter } from "./failureAnalyticsRoutes.js";
 import {
   REQUIRED_COLUMNS,
   splitCsvLine,
@@ -300,6 +302,7 @@ async function handleImportUpload(req: express.Request, res: express.Response) {
 
 app.use(cors());
 app.use(express.json());
+app.use("/api/analytics", createFailureAnalyticsRouter((query) => getFailureAnalytics(prisma, localTransactions, query)));
 
 app.get("/health", (_req, res) => {
   res.json({
