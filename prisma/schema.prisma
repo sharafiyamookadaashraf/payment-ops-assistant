@@ -52,7 +52,8 @@ model ImportError {
 model Transaction {
   id            String   @id @default(cuid())
   transactionId String   @unique
-  amount        Float
+  amount        Decimal  @db.Decimal(16, 2)
+  merchantId    String?
   currency      String
   status        String
   failureReason String?
@@ -64,4 +65,5 @@ model Transaction {
   @@index([importId])
   @@index([status])
   @@index([currency])
+  @@index([merchantId, createdAt])
 }

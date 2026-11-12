@@ -80,7 +80,7 @@ export type TransactionsSummary = {
   successfulTransactions: number;
   failedTransactions: number;
   pendingTransactions: number;
-  totalProcessedAmount: number;
+  processedAmountsByCurrency: { currency: string; amount: string }[];
   successRate: number;
 };
 

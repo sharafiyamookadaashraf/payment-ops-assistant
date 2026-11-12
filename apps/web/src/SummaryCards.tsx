@@ -4,10 +4,6 @@ type Props = {
   summary: TransactionsSummary;
 };
 
-function formatAmount(amount: number): string {
-  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(amount);
-}
-
 export function SummaryCards({ summary }: Props) {
   if (summary.totalTransactions === 0) {
     return <p>No transactions yet. Upload a CSV on the Upload page to get started.</p>;
@@ -18,7 +14,7 @@ export function SummaryCards({ summary }: Props) {
     { label: "Successful", value: summary.successfulTransactions },
     { label: "Failed", value: summary.failedTransactions },
     { label: "Pending", value: summary.pendingTransactions },
-    { label: "Total Processed", value: formatAmount(summary.totalProcessedAmount) },
+    ...summary.processedAmountsByCurrency.map(({ currency, amount }) => ({ label: `Processed · ${currency}`, value: amount })),
     { label: "Success Rate", value: `${summary.successRate}%` },
   ];
 

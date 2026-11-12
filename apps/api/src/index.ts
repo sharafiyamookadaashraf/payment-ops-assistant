@@ -225,7 +225,7 @@ async function handleImportUpload(req: express.Request, res: express.Response) {
         });
       }
     } else {
-      localTransactions.push(...validTransactions);
+      localTransactions.push(...validTransactions.map((transaction) => ({ ...transaction, importId: importRecord!.id })));
     }
 
     if (validationErrors.length > 0) {

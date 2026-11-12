@@ -7,7 +7,7 @@
     "dev": "tsx watch src/index.ts",
     "build": "tsc",
     "start": "tsx src/index.ts",
-    "test": "node --import tsx --test src/csvProcessing.test.ts src/importRepository.test.ts src/transactionsRepository.test.ts src/importService.test.ts"
+    "test": "node --import tsx --test src/*.test.ts src/ops/*.test.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.115.0",

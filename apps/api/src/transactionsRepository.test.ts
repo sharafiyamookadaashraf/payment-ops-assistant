@@ -18,7 +18,7 @@ test("getTransactionsSummary: computes correct counts and total processed amount
   assert.equal(summary.successfulTransactions, 2);
   assert.equal(summary.failedTransactions, 2);
   assert.equal(summary.pendingTransactions, 1);
-  assert.equal(summary.totalProcessedAmount, 150); // only SUCCESS: 100 + 50
+  assert.deepEqual(summary.processedAmountsByCurrency, [{ currency: "USD", amount: "150.00" }]); // only SUCCESS: 100 + 50
 });
 
 test("getTransactionsSummary: computes success rate as a percentage", async () => {
@@ -30,7 +30,7 @@ test("getTransactionsSummary: returns zeros for an empty dataset, not NaN or an 
   const summary = await getTransactionsSummary(null, []);
   assert.equal(summary.totalTransactions, 0);
   assert.equal(summary.successRate, 0);
-  assert.equal(summary.totalProcessedAmount, 0);
+  assert.deepEqual(summary.processedAmountsByCurrency, []);
 });
 
 // --- listTransactions (filtering, search, sort, pagination) ---
