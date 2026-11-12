@@ -27,8 +27,11 @@ services:
     environment:
       DATABASE_URL: postgresql://postgres:postgres@db:5432/payment_ops
       PORT: "3001"
+      HOST: "0.0.0.0"
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      ANTHROPIC_MODEL: ${ANTHROPIC_MODEL:-claude-sonnet-4-6}
     ports:
-      - "3001:3001"
+      - "127.0.0.1:3001:3001"
 
   web:
     build:
@@ -38,7 +41,7 @@ services:
     depends_on:
       - api
     ports:
-      - "8080:80"
+      - "127.0.0.1:8080:80"
 
 volumes:
   db-data:

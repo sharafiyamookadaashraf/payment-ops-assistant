@@ -11,7 +11,7 @@ export type Snapshot = { source: "postgres" | "memory"; asOf: string; importId: 
 export type Scope = { dateFrom?: string; dateTo?: string; currency?: string; merchantId?: string; status?: string; search?: string; limit?: number };
 export type Fact = { id: string; label: string; value: string | number; unit: string };
 export type Finding = { id: string; rule: "possible_duplicate" | "failure_spike"; severity: "review"; description: string; transactionIds: string[]; evidence: Record<string, unknown> };
-export type ToolResult = { source: Snapshot["source"]; asOf: string; importId: string | null; scope: Scope; facts: Fact[]; findings: Finding[]; data: unknown; warnings: string[] };
+export type ToolResult = { tool: string; source: Snapshot["source"]; asOf: string; importId: string | null; scope: Scope; facts: Fact[]; findings: Finding[]; data: unknown; warnings: string[] };
 export const MAX_ROWS = 10000;
 const DAY = 86400000;
 
@@ -79,7 +79,7 @@ export function runAnalytics(name: string, input: unknown, snapshot: Snapshot, c
   const scope = parseScope(input, name === "search_transactions");
   const rows = selectRows(snapshot, scope);
   const result: ToolResult = {
-    source: snapshot.source, asOf: snapshot.asOf, importId: snapshot.importId, scope, facts: [], findings: [], data: null,
+    tool: name, source: snapshot.source, asOf: snapshot.asOf, importId: snapshot.importId, scope, facts: [], findings: [], data: null,
     warnings: ["Synthetic demonstration data only. Findings require human review; recorded reasons do not establish root cause."],
   };
   const fact = (key: string, label: string, value: string | number, unit = "transactions") => result.facts.push({ id: `${callId}.${key}`, label, value, unit });
@@ -162,8 +162,9 @@ export function runAnalytics(name: string, input: unknown, snapshot: Snapshot, c
       // preserve merchant/currency filters. Missing days are not bridged.
       const previous = counts(selectRows(snapshot, { ...scope, dateFrom: previousDay, dateTo: previousDay }));
       if (current.total < 5 || previous.total < 5) { insufficient++; continue; }
-      const change = Math.round((current.failed / current.total - previous.failed / previous.total) * 10000) / 100;
-      if (change < 20) continue;
+      const difference = current.failed * previous.total - previous.failed * current.total;
+      if (difference * 100 < 20 * current.total * previous.total) continue;
+      const change = Math.round(difference * 10000 / (current.total * previous.total)) / 100;
       spikeCount++;
       if (result.findings.length >= 20) continue;
       fact(`rate_${day}`, `Failure rate on ${day}`, rate(current.failed, current.total), "%");

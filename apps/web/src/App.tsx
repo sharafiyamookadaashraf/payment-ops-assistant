@@ -1,3 +1,5 @@
+import { OpsCopilot } from './OpsCopilot'
+import { API_BASE } from './api'
 import { useEffect, useState } from 'react'
 import { fetchImports, fetchTransactionsSummary, type ImportListResponse, type TransactionsSummary } from './api.js'
 import { ImportsTable } from './ImportsTable.js'
@@ -5,7 +7,8 @@ import { SummaryCards } from './SummaryCards.js'
 import { TransactionsTable } from './TransactionsTable.js'
 
 function App() {
-  const [activePage, setActivePage] = useState<'dashboard' | 'transactions' | 'imports' | 'upload'>('dashboard')
+  const [activePage, setActivePage] = useState<'dashboard' | 'transactions' | 'imports' | 'upload' | 'copilot'>('dashboard')
+  const [lastImportId, setLastImportId] = useState('')
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [uploadMessage, setUploadMessage] = useState('')
   const [toastMessage, setToastMessage] = useState('')
@@ -63,7 +66,7 @@ function App() {
     formData.append('file', selectedFile)
 
     try {
-      const response = await fetch('http://localhost:3001/transactions/upload', {
+      const response = await fetch(`${API_BASE}/transactions/upload`, {
         method: 'POST',
         body: formData,
       })
@@ -78,6 +81,7 @@ function App() {
 
       const count = data.successfulRows ?? data.importedCount ?? (data.records ? data.records.length : 0)
       const successText = `${count} records imported successfully`
+      setLastImportId(data.id || '')
       setUploadMessage(successText)
       setToastMessage(successText)
       setActivePage('transactions')
@@ -124,10 +128,12 @@ function App() {
           >
             Upload
           </button>
+          <button type="button" className={activePage === 'copilot' ? 'active' : ''} onClick={() => setActivePage('copilot')}>Ops Copilot</button>
         </nav>
       </aside>
 
       <section className="content-area">
+        {activePage === 'copilot' && <OpsCopilot initialImportId={lastImportId} />}
         {activePage === 'dashboard' && (
           <div className="page-card">
             <h2>Dashboard</h2>
@@ -164,6 +170,7 @@ function App() {
         {activePage === 'upload' && (
           <div className="page-card upload-card">
             <h2>Upload Page</h2>
+            <p>Use synthetic payment data only. Uploaded data may be sent to Claude when you run an investigation.</p>
             <label className="file-input-label">
               <span>Choose File</span>
               <input

@@ -1,10 +1,11 @@
 import Anthropic from "@anthropic-ai/sdk";
 import type { Message, MessageParam, MessageCreateParamsNonStreaming, ToolResultBlockParam } from "@anthropic-ai/sdk/resources/messages";
-import { runAnalytics, type Snapshot, type ToolResult, type Fact, type Finding } from "./analytics.js";
+import { runAnalytics, type Snapshot, type ToolResult, type Fact, type Finding, type Scope, type OpsTransaction } from "./analytics.js";
 import { OPS_TOOLS, REPORT_SCHEMA } from "./tools.js";
 
 export type Report = {
   status: "answer" | "needs_clarification"; answer: string; facts: Fact[]; findings: Finding[];
+  searchResults: { scope: Scope; rows: OpsTransaction[]; truncated: boolean }[];
   warnings: string[]; source: Snapshot["source"]; asOf: string; importId: string | null;
 };
 export type Progress = { type: "progress"; message: string; tool?: string };
@@ -56,6 +57,10 @@ export function renderReport(raw: unknown, results: ToolResult[], snapshot: Snap
   return {
     status: data.status as Report["status"], answer,
     facts: [...referenced].map((id) => facts.get(id)!), findings: [...new Set<string>(data.findingIds)].map((id) => findings.get(id)!),
+    searchResults: results.filter((result) => result.tool === "search_transactions").map((result) => {
+      const data = result.data as { transactions: OpsTransaction[]; truncated: boolean };
+      return { scope: result.scope, rows: data.transactions, truncated: data.truncated };
+    }),
     warnings: [...new Set(results.flatMap((result) => result.warnings))], source: snapshot.source, asOf: snapshot.asOf, importId: snapshot.importId,
   };
 }

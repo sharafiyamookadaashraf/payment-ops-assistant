@@ -43,3 +43,9 @@ test("CSV money rejects silent rounding and optional merchants preserve legacy r
   assert.throws(() => validateRow(record, 2), /two decimals/);
   assert.equal(validateRow({ ...record, amount: "1.01" }, 2).merchantId, null);
 });
+
+test("a rounded twenty-percent display does not cross the spike threshold", () => {
+  const rows = [...Array.from({ length: 5 }, (_, n) => row(`previous-${n}`, { createdAt: "2026-11-09T12:00:00.000Z" })), ...Array.from({ length: 4001 }, (_, n) => row(`current-${n}`, { status: n < 800 ? "FAILED" : "SUCCESS" }))];
+  const result = runAnalytics("flag_anomalies", { dateFrom: "2026-11-10" }, snapshot(rows), "t");
+  assert.equal(value(result, "spikes"), 0); // 800/4001 < 20%, although rounded to two decimals it is 20.00.
+});

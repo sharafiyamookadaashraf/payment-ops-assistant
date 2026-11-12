@@ -1,3 +1,5 @@
+export const API_BASE = (import.meta.env.VITE_API_URL || "http://localhost:3001").replace(/\/$/, "");
+
 export type ImportStatus = "PROCESSING" | "COMPLETED" | "PARTIALLY_COMPLETED" | "FAILED";
 
 export type ImportSummary = {
@@ -65,7 +67,7 @@ export async function fetchImports(
     params.set("sortOrder", query.sortOrder);
   }
 
-  const url = `http://localhost:3001/api/imports?${params.toString()}`;
+  const url = `${API_BASE}/api/imports?${params.toString()}`;
   const response = await fetch(url);
 
   if (!response.ok) {
@@ -85,7 +87,7 @@ export type TransactionsSummary = {
 };
 
 export async function fetchTransactionsSummary(): Promise<TransactionsSummary> {
-  const response = await fetch("http://localhost:3001/api/transactions/summary");
+  const response = await fetch(`${API_BASE}/api/transactions/summary`);
   if (!response.ok) {
     throw new Error("Failed to load dashboard summary");
   }
@@ -131,7 +133,7 @@ export async function fetchTransactions(
   if (query.dateTo) params.set("dateTo", query.dateTo);
   if (query.sortBy) params.set("sortBy", query.sortBy);
   if (query.sortOrder) params.set("sortOrder", query.sortOrder);
-  const url = `http://localhost:3001/api/transactions?${params.toString()}`;
+  const url = `${API_BASE}/api/transactions?${params.toString()}`;
   const response = await fetch(url);
   if (!response.ok) {
     throw new Error("Failed to load transactions");
