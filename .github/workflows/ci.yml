@@ -29,6 +29,9 @@ jobs:
       - name: Run backend tests
         run: npm --prefix apps/api test
 
+      - name: Check deterministic evaluation fixtures
+        run: npm --prefix apps/api run eval
+
       - name: Type-check and build backend
         run: npm --prefix apps/api run build
 

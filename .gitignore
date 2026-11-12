@@ -5,3 +5,6 @@ node_modules
 /generated/prisma
 dist
 .DS_Store
+
+# Optional local live-evaluation output
+ops-eval-results.json
