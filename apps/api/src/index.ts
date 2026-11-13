@@ -1,3 +1,5 @@
+import { loadSnapshot } from "./ops/analytics.js";
+import { createOpsRouter } from "./ops/routes.js";
 import { PrismaPg } from "@prisma/adapter-pg";
 import crypto from "node:crypto";
 import path from "node:path";
@@ -44,8 +46,12 @@ const localImports: StoredImport[] = [];
 const localTransactions: TransactionInput[] = [];
 
 async function initializePrisma() {
+  if (!process.env.DATABASE_URL) {
+    console.log("DATABASE_URL not set; using in-memory demo storage.");
+    return;
+  }
   try {
-const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL });
+const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL, connectionTimeoutMillis: 5000 });
 const client = new PrismaClient({ adapter });
 
     await client.$connect();
@@ -57,7 +63,7 @@ const client = new PrismaClient({ adapter });
   }
 }
 
-initializePrisma();
+await initializePrisma();
 
 // --- multer: replaces the old hand-rolled parseMultipartFile. Enforces
 // file size + .csv type at the boundary instead of trusting raw parsing. ---
@@ -225,7 +231,7 @@ async function handleImportUpload(req: express.Request, res: express.Response) {
         });
       }
     } else {
-      localTransactions.push(...validTransactions);
+      localTransactions.push(...validTransactions.map((transaction) => ({ ...transaction, importId: importRecord!.id })));
     }
 
     if (validationErrors.length > 0) {
@@ -299,7 +305,11 @@ async function handleImportUpload(req: express.Request, res: express.Response) {
 }
 
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: "32kb" }));
+app.use("/api", createOpsRouter({
+  snapshot: (importId) => loadSnapshot(prisma, localTransactions, importId),
+  apiKey: process.env.ANTHROPIC_API_KEY, model: process.env.ANTHROPIC_MODEL,
+}));
 
 app.get("/health", (_req, res) => {
   res.json({
@@ -387,6 +397,6 @@ app.get("/api/transactions", async (req, res) => {
   const result = await listTransactions(prisma, localTransactions, query);
   res.json(result);
 });
-app.listen(port, () => {
+app.listen(port, process.env.HOST || "127.0.0.1", () => {
   console.log(`API running on http://localhost:${port}`);
 });

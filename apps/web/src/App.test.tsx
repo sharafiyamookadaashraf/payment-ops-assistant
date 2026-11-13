@@ -39,7 +39,7 @@ describe('Dashboard tab (default view)', () => {
       successfulTransactions: 3,
       failedTransactions: 1,
       pendingTransactions: 1,
-      totalProcessedAmount: 250.75,
+      processedAmountsByCurrency: [{ currency: "USD", amount: "250.75" }],
       successRate: 60,
     })
     render(<App />)
@@ -58,7 +58,7 @@ describe('Upload form', () => {
       successfulTransactions: 0,
       failedTransactions: 0,
       pendingTransactions: 0,
-      totalProcessedAmount: 0,
+      processedAmountsByCurrency: [],
       successRate: 0,
     })
     render(<App />)
@@ -76,7 +76,7 @@ describe('Upload form', () => {
       successfulTransactions: 0,
       failedTransactions: 0,
       pendingTransactions: 0,
-      totalProcessedAmount: 0,
+      processedAmountsByCurrency: [],
       successRate: 0,
     })
     vi.mocked(api.fetchTransactions).mockResolvedValue({ data: [], total: 0, page: 1, pageSize: 10 })
@@ -115,7 +115,7 @@ describe('Upload form', () => {
       successfulTransactions: 0,
       failedTransactions: 0,
       pendingTransactions: 0,
-      totalProcessedAmount: 0,
+      processedAmountsByCurrency: [],
       successRate: 0,
     })
 

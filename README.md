@@ -2,7 +2,13 @@
 
 ![Dashboard](docs/screenshots/dashboard.png)
 
-A production-inspired payment operations dashboard built with **React, TypeScript, Node.js, Express, Prisma, and PostgreSQL**.
+A payment operations dashboard and **Ops Copilot** built with **React, TypeScript, Node.js, Express, Prisma 7, PostgreSQL, and the Claude API**.
+
+Upload a synthetic CSV, ask about a failure spike or possible duplicates, and inspect the backend evidence behind the answer. Claude chooses read-only tools and explains their results; deterministic code calculates counts, rates and monetary totals.
+
+**Synthetic data only.** This is a local, single-user portfolio demo. It has no payment execution capabilities and no production authentication. Do not upload real customer or payment data.
+
+[Ops Copilot setup, learning walkthrough and evaluation guide](docs/ops-copilot.md)
 
 The application simulates the type of internal tooling used by payment operations teams to import transaction exports, validate data quality, monitor processing metrics, and investigate failed imports.
 
@@ -15,7 +21,12 @@ Rather than focusing on CRUD functionality, this project demonstrates backend ar
 - CSV transaction import
 - Comprehensive row-level validation
 - Import history
-- Dashboard analytics
+- Currency-separated dashboard analytics
+- Claude tool-use investigation loop with streamed progress
+- Exact monetary totals and evidence references
+- Rule-based duplicate candidates and daily failure spikes
+- Structured findings for human review
+- Ten-question evaluation set (offline oracles and optional live model evals)
 - Transaction search
 - Filtering
 - Sorting
@@ -54,22 +65,22 @@ Rather than focusing on CRUD functionality, this project demonstrates backend ar
 
 # 🏗 Architecture
 
-```text
-React Dashboard
-        │
-        ▼
-Express REST API
-        │
-CSV Validation Pipeline
-        │
-        ▼
-Prisma ORM
-        │
-        ▼
-PostgreSQL
+```mermaid
+flowchart TD
+    UI[React dashboard] --> API[Express API]
+    API <--> Claude[Claude API]
+    API --> Tools[Read-only tool handlers]
+    Desktop[Claude Desktop or Code] -. Later .-> MCP[MCP server]
+    MCP -. Later .-> Tools
+    Skills[Ops runbooks as Skills] -. Later guidance .-> Claude
+    Tools --> Rules[Deterministic analytics]
+    Rules --> Snapshot[Bounded payment snapshot]
+    Snapshot --> DB[PostgreSQL or explicit memory demo]
 ```
 
-The frontend communicates with a REST API responsible for validating uploaded CSV files, persisting successful transactions, recording validation failures, and exposing dashboard metrics.
+The API streams investigation steps over SSE and sends the completed report after validation. Numeric placeholders are filled from tool facts. Structured findings and transaction evidence come directly from backend rules. Qualitative interpretation still requires review; a valid JSON schema does not establish factual truth.
+
+MCP, Agent Skills and Claude Code workflow additions are later course milestones. The current implementation contains the analytics foundation and Claude API milestone.
 
 ---
 
@@ -132,7 +143,7 @@ The dashboard provides operational metrics including:
 - Successful transactions
 - Pending transactions
 - Failed transactions
-- Total processed amount
+- Successful processed amounts grouped by currency
 - Success rate
 
 These metrics are aggregated by the backend rather than calculated on the client.
@@ -209,7 +220,7 @@ Several implementation choices were made intentionally.
 
 Navigation is implemented using component state.
 
-For a four-page dashboard this keeps routing simple while avoiding unnecessary dependencies.
+For this small dashboard this keeps routing simple while avoiding unnecessary dependencies.
 
 A larger application would benefit from route-based navigation.
 
@@ -223,11 +234,9 @@ While sufficient for this project, production systems would likely rely on a mat
 
 ---
 
-### Local API Configuration
+### API Configuration
 
-The frontend currently uses a local API URL.
-
-Production deployments should move this into environment variables.
+The frontend uses `VITE_API_URL`, defaulting to `http://localhost:3001`. Claude credentials stay on the API server. The local API binds to loopback by default. Public hosting requires authentication, authorization, tenant isolation and shared rate/cost controls.
 
 ---
 
@@ -241,21 +250,14 @@ The trade-off is improved demo resilience when a database isn't available.
 
 # 📂 Project Structure
 
-```
-apps/
-│
-├── api/
-│   ├── routes/
-│   ├── repositories/
-│   ├── services/
-│   ├── prisma/
-│   └── server.ts
-│
-└── web/
-    ├── components/
-    ├── pages/
-    ├── hooks/
-    └── App.tsx
+```text
+apps/api/src/           Express, CSV imports and repositories
+apps/api/src/ops/       Analytics rules, tool schemas, Claude loop and SSE route
+apps/api/evals/         Ten questions, expected facts and optional live runner
+apps/web/src/           React dashboard and Ops Copilot panel
+prisma/                Schema and versioned migrations
+sample-data/           Synthetic CSV fixtures
+docs/                  Architecture and learning walkthrough
 ```
 
 ---
@@ -264,49 +266,63 @@ apps/
 
 ## Prerequisites
 
-- Node.js 18+
-- PostgreSQL
+- Node.js 24+ (CI also tests the configured Node version)
+- PostgreSQL for persistence, or omit `DATABASE_URL` for the in-memory demo
+- An Anthropic API key, available API credits and a supported model for live investigations
 
-## Install
+## Install and configure
 
-```bash
-cd apps/api
-npm install
-
-cd ../web
-npm install
-```
-
-## Configure
-
-Create a `.env` file:
-
-```env
-DATABASE_URL="postgresql://user:password@localhost:5432/payment_ops"
-```
-
-## Database
+Run from the repository root:
 
 ```bash
+npm ci
+npm --prefix apps/api ci
+npm --prefix apps/web ci
+cp .env.example .env
 npx prisma generate
-npx prisma migrate dev
 ```
+
+Set `ANTHROPIC_API_KEY` and `ANTHROPIC_MODEL` in `.env`. Optional `DATABASE_URL` enables persistence. Never commit keys or expose them through `VITE_` variables. If PostgreSQL is configured, apply migrations:
+
+```bash
+npx prisma migrate deploy
+```
+
+The amount migration rejects values that would need silent rounding. Review synthetic data before migrating an existing database.
 
 ## Run
 
-Terminal 1
-
 ```bash
+# Terminal 1
 cd apps/api
 npm run dev
 ```
 
-Terminal 2
+```bash
+# Terminal 2, from the repository root
+npm --prefix apps/web run dev
+```
+
+Open the frontend, upload `sample-data/ops-copilot-synthetic.csv`, and choose **Ops Copilot → Failure investigation**. Without a configured key/model, the dashboard still works and Copilot reports its missing configuration.
+
+## Verify
 
 ```bash
-cd apps/web
-npm run dev
+npm --prefix apps/api test
+npm --prefix apps/api run build
+npm --prefix apps/api run eval
+npm --prefix apps/web test
+npm --prefix apps/web run lint
+npm --prefix apps/web run build
 ```
+
+Offline evals verify deterministic expected facts. To evaluate actual Claude tool selection and answers (uses API credits):
+
+```bash
+npm --prefix apps/api run eval:live -- --output ../../ops-eval-results.json
+```
+
+Review the qualitative rubric as well as automated assertions. Live model results are not claimed until that run has completed.
 
 ---
 
@@ -319,22 +335,18 @@ npm run dev
 | GET | `/api/imports` | Import history |
 | GET | `/api/imports/:id` | Import details |
 | GET | `/api/transactions` | Transactions |
-| GET | `/api/transactions/summary` | Dashboard metrics |
+| GET | `/api/transactions/summary` | Dashboard metrics by currency |
+| POST | `/api/ask` | Stream investigation progress and a validated report |
 
 ---
 
-# 🚀 Future Improvements
+# 🚀 Next Course Milestones
 
-- AI-powered operations assistant
-- Automated test suite
-- Docker Compose
-- GitHub Actions CI/CD
-- Environment-based frontend configuration
-- Zod validation
-- Request logging
-- Rate limiting
-- React Router
-- Authentication & authorization
+1. **MCP:** share the existing handlers through an MCP server with a dedicated read-only DB role.
+2. **Agent Skills:** package failed-payment triage and batch-reconciliation runbooks.
+3. **Claude Code:** add project conventions and a custom command; document what was directed and reviewed.
+
+Before public hosting: authentication/authorization, tenant-scoped data access, durable usage limits and observability. For larger data: database-level rule aggregations instead of the current bounded snapshot.
 
 ---
 

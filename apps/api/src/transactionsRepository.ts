@@ -1,8 +1,11 @@
 // apps/api/src/transactionsRepository.ts
-import { PrismaClient } from "../../../generated/prisma/client.js";
+import type { PrismaClient } from "../../../generated/prisma/client.js";
+
+import { sumByCurrency } from "./money.js";
 
 export type TransactionForSummary = {
   amount: number;
+  currency: string;
   status: string;
 };
 
@@ -11,7 +14,7 @@ export type TransactionsSummary = {
   successfulTransactions: number;
   failedTransactions: number;
   pendingTransactions: number;
-  totalProcessedAmount: number; // sum of amount where status = SUCCESS
+  processedAmountsByCurrency: { currency: string; amount: string }[];
   successRate: number; // 0-100, rounded to 1 decimal
 };
 
@@ -20,12 +23,10 @@ function summarize(transactions: TransactionForSummary[]): TransactionsSummary {
   let successfulTransactions = 0;
   let failedTransactions = 0;
   let pendingTransactions = 0;
-  let totalProcessedAmount = 0;
 
   for (const t of transactions) {
     if (t.status === "SUCCESS") {
       successfulTransactions += 1;
-      totalProcessedAmount += t.amount;
     } else if (t.status === "FAILED") {
       failedTransactions += 1;
     } else if (t.status === "PENDING") {
@@ -41,7 +42,7 @@ function summarize(transactions: TransactionForSummary[]): TransactionsSummary {
     successfulTransactions,
     failedTransactions,
     pendingTransactions,
-    totalProcessedAmount,
+    processedAmountsByCurrency: sumByCurrency(transactions),
     successRate,
   };
 }
@@ -54,23 +55,17 @@ export async function getTransactionsSummary(
     return summarize(localTransactions);
   }
 
-  const [totalTransactions, statusCounts, successSum] = await Promise.all([
+  const [totalTransactions, statusCounts, successSums] = await prisma.$transaction([
     prisma.transaction.count(),
-    prisma.transaction.groupBy({
-      by: ["status"],
-      _count: { status: true },
-    }),
-    prisma.transaction.aggregate({
-      where: { status: "SUCCESS" },
-      _sum: { amount: true },
-    }),
-  ]);
+    prisma.transaction.groupBy({ by: ["status"], _count: { status: true } }),
+    prisma.transaction.groupBy({ by: ["currency"], where: { status: "SUCCESS" }, _sum: { amount: true }, orderBy: { currency: "asc" } }),
+  ], { isolationLevel: "RepeatableRead" });
 
   const countByStatus = Object.fromEntries(statusCounts.map((row) => [row.status, row._count.status]));
   const successfulTransactions = countByStatus["SUCCESS"] ?? 0;
   const failedTransactions = countByStatus["FAILED"] ?? 0;
   const pendingTransactions = countByStatus["PENDING"] ?? 0;
-  const totalProcessedAmount = Number(successSum._sum.amount ?? 0);
+  const processedAmountsByCurrency = successSums.map((row) => ({ currency: row.currency, amount: row._sum.amount?.toFixed(2) ?? "0.00" }));
 
   const successRate =
     totalTransactions === 0 ? 0 : Math.round((successfulTransactions / totalTransactions) * 1000) / 10;
@@ -80,7 +75,7 @@ export async function getTransactionsSummary(
     successfulTransactions,
     failedTransactions,
     pendingTransactions,
-    totalProcessedAmount,
+    processedAmountsByCurrency,
     successRate,
   };
 }

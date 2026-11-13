@@ -458,3 +458,48 @@ tbody tr[data-status='PARTIALLY_COMPLETED'] {
     padding: 24px 20px;
   }
 }
+
+/* ---------- Ops Copilot ---------- */
+.copilot-layout { display: grid; gap: 22px; min-width: 0; }
+.copilot-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 20px; }
+.copilot-header h2 { margin: 6px 0; font-size: 30px; letter-spacing: -0.03em; }
+.copilot-header p:not(.eyebrow), .copilot-caption { color: var(--text-muted); font-size: 13px; }
+.eyebrow { font: 11px var(--font-mono); letter-spacing: 0.12em; color: var(--accent); }
+.copilot-badge { padding: 6px 10px; border: 1px solid #beddd8; border-radius: 20px; background: var(--accent-soft); color: var(--accent-strong); font-size: 11px; white-space: nowrap; }
+.copilot-intro { font-weight: 600; margin-bottom: 16px; }
+.prompt-options { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 24px; }
+.prompt-options button, .secondary-button { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 7px 11px; font-size: 12px; cursor: pointer; }
+.prompt-options button:hover { border-color: var(--accent); color: var(--accent); }
+.copilot-composer label { display: block; font-size: 13px; font-weight: 500; margin: 12px 0 8px; }
+.copilot-composer textarea, .copilot-composer input { display: block; width: 100%; border: 1px solid var(--border); border-radius: 6px; padding: 12px; background: var(--bg); font: inherit; font-size: 14px; resize: vertical; }
+.copilot-composer textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.copilot-composer details { margin: 12px 0; font-size: 12px; color: var(--text-muted); }
+.copilot-composer details p { margin-top: 8px; }
+.copilot-layout summary { cursor: pointer; }
+.copilot-actions { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding-top: 16px; border-top: 1px solid var(--border); }
+.copilot-actions > span { font-size: 12px; color: var(--text-muted); }
+.copilot-actions > div { display: flex; gap: 8px; }
+.copilot-layout button:disabled { opacity: 0.5; cursor: not-allowed; }
+.copilot-trace { font: 12px var(--font-mono); color: var(--text-muted); padding: 0 8px; }
+.copilot-trace li { margin-top: 8px; }
+.copilot-error { padding: 16px; border: 1px solid #fecaca; border-radius: 6px; background: var(--failed-bg); color: var(--failed); font-size: 13px; }
+.copilot-report { display: grid; gap: 20px; }
+.copilot-report h3, .copilot-report h4 { margin: 0; }
+.copilot-report-heading { display: flex; justify-content: space-between; gap: 16px; }
+.copilot-report-heading span { color: var(--text-muted); font-size: 11px; }
+.copilot-answer { white-space: pre-wrap; line-height: 1.7; }
+.copilot-facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; }
+.copilot-fact { background: var(--surface-sunken); border: 1px solid var(--border); padding: 14px; border-radius: 6px; overflow-wrap: anywhere; }
+.copilot-fact p { font-size: 12px; color: var(--text-muted); }
+.copilot-fact strong { display: block; font: 600 23px var(--font-mono); margin: 8px 0; }
+.copilot-fact small { font: 11px var(--font-body); }
+.copilot-fact code { font: 10px var(--font-mono); color: var(--text-faint); }
+.copilot-findings article { border-left: 3px solid var(--pending); background: #fffcf5; padding: 16px; margin-top: 12px; font-size: 13px; }
+.copilot-findings article h4 { margin: 8px 0; }
+.copilot-findings details { margin-top: 12px; }
+.copilot-findings pre { white-space: pre-wrap; overflow-wrap: anywhere; font-size: 11px; }
+.transaction-references { margin-top: 10px; font: 12px var(--font-mono); overflow-wrap: anywhere; }
+.copilot-limitations { font-size: 12px; color: var(--text-muted); border-top: 1px solid var(--border); padding-top: 16px; }
+.copilot-limitations ul { margin-bottom: 0; padding-left: 18px; }
+.copilot-limitations li { margin: 6px 0; }
+@media (max-width: 720px) { .copilot-header, .copilot-actions { flex-direction: column; align-items: flex-start; } .copilot-report-heading { flex-direction: column; gap: 6px; } .content-area { min-width: 0; } }

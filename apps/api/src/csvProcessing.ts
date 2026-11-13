@@ -18,6 +18,8 @@ export type CsvRow = Record<string, string>;
 export type TransactionInput = {
   transactionId: string;
   amount: number;
+  merchantId?: string | null;
+  importId?: string | null;
   currency: string;
   status: string;
   failureReason: string | null;
@@ -95,6 +97,7 @@ export function validateRow(record: CsvRow, rowIndex: number): TransactionInput 
   const amount = Number(record.amount);
   const createdAt = new Date(record.createdAt);
   const failureReason = record.failureReason?.trim() || null;
+  const merchantId = record.merchantId?.trim() || null;
 
   if (!transactionId) {
     throw new Error(`Row ${rowIndex}: transactionId is required`);
@@ -102,6 +105,16 @@ export function validateRow(record: CsvRow, rowIndex: number): TransactionInput 
 
   if (!Number.isFinite(amount) || amount <= 0) {
     throw new Error(`Row ${rowIndex}: amount must be a positive number`);
+  }
+
+  if (!/^\d+(\.\d{1,2})?$/.test(record.amount?.trim() ?? "") || amount > 9999999999.99) {
+    throw new Error(`Row ${rowIndex}: amount must have at most two decimals and be <= 9999999999.99`);
+  }
+  if (merchantId && !/^[A-Za-z0-9_-]{1,80}$/.test(merchantId)) {
+    throw new Error(`Row ${rowIndex}: merchantId must use letters, digits, underscores or hyphens (max 80)`);
+  }
+  if (transactionId.length > 120 || (failureReason?.length ?? 0) > 200) {
+    throw new Error(`Row ${rowIndex}: transactionId or failureReason is too long`);
   }
 
   if (!currency) {
@@ -127,6 +140,7 @@ export function validateRow(record: CsvRow, rowIndex: number): TransactionInput 
   return {
     transactionId,
     amount,
+    merchantId,
     currency: currency.toUpperCase(),
     status: status.toUpperCase(),
     failureReason,

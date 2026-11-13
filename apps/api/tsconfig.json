@@ -9,7 +9,13 @@
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "skipLibCheck": true,
-    "types": ["node"]
+    "types": [
+      "node"
+    ]
   },
-  "include": ["src/**/*.ts", "../../generated/**/*.ts"]
+  "include": [
+    "src/**/*.ts",
+    "../../generated/**/*.ts",
+    "evals/**/*.ts"
+  ]
 }
