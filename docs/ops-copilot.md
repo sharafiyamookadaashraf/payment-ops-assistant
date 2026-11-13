@@ -38,6 +38,8 @@ With no model configuration, `/api/ask` returns 503 with a setup message. No fak
 
 ## Read the code alongside your API course
 
+Start with [Lesson 1: explain and validate an agent workflow](agent-workflow-lesson-1.md). Run `npm --prefix apps/api run learn:agent` for an offline, scripted model replay through the real tool loop, including evidence checks and a demonstration of their semantic limits. It requires no API credits and does not evaluate Claude.
+
 | Course concept | File | What to inspect |
 | --- | --- | --- |
 | Deterministic business logic | `apps/api/src/ops/analytics.ts` | A bounded snapshot, filters, rule thresholds and explicit missing data. |

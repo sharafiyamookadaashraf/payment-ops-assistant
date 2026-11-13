@@ -32,6 +32,9 @@ jobs:
       - name: Check deterministic evaluation fixtures
         run: npm --prefix apps/api run eval
 
+      - name: Verify offline agent workflow lesson
+        run: npm --prefix apps/api run learn:agent
+
       - name: Type-check and build backend
         run: npm --prefix apps/api run build
 

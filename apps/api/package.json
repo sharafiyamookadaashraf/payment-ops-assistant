@@ -9,7 +9,8 @@
     "start": "tsx src/index.ts",
     "test": "node --import tsx --test src/*.test.ts src/ops/*.test.ts",
     "eval": "node --import tsx evals/run.ts",
-    "eval:live": "node --import tsx evals/run.ts --live"
+    "eval:live": "node --import tsx evals/run.ts --live",
+    "learn:agent": "node --import tsx evals/agent-workflow-lesson.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.115.0",
